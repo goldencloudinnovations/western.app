@@ -1,0 +1,10 @@
+{
+  "placeholderImages": [
+    {
+      "id": "app-teaser",
+      "description": "A blurred teaser image of the Western.App interface.",
+      "imageUrl": "https://picsum.photos/seed/western-app/1200/800",
+      "imageHint": "app interface"
+    }
+  ]
+}
