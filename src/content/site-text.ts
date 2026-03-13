@@ -14,9 +14,9 @@ export const siteText = {
     legalName: "Western.App",
   },
   hero: {
-    title: "The Future of Something is Here",
+    title: "The Future of the Frontier has arrived.",
     description:
-      "Experience the next generation of whatever it is we do. Seamlessly integrated, beautifully designed, and vaguely powerful.",
+      "Experience the next generation of equine ASMR.",
   },
   teaser: {
     title: "Something New is on the Horizon",
