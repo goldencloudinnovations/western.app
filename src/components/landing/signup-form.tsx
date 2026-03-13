@@ -6,6 +6,7 @@ import { subscribeToNewsletter } from "@/app/actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { siteText } from "@/content/site-text";
 
 const initialState = {
   success: false,
@@ -19,10 +20,10 @@ function SubmitButton() {
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Subscribing...
+          {siteText.signup.submitPendingLabel}
         </>
       ) : (
-        "Subscribe"
+        siteText.signup.submitLabel
       )}
     </Button>
   );
@@ -52,10 +53,10 @@ export function SignUpForm() {
           id="email"
           name="email"
           type="email"
-          placeholder="name@example.com"
+          placeholder={siteText.signup.emailPlaceholder}
           required
           className="h-11 w-full flex-1 bg-background/90"
-          aria-label="Email"
+          aria-label={siteText.signup.emailAriaLabel}
         />
         <SubmitButton />
       </form>

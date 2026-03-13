@@ -4,10 +4,11 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { themeConfig } from '@/config/theme';
+import { siteText } from '@/content/site-text';
 
 export const metadata: Metadata = {
-  title: 'Western.App Showcase',
-  description: 'A promotional landing page for Western.App',
+  title: siteText.metadata.title,
+  description: siteText.metadata.description,
 };
 
 const rootThemeVars = {

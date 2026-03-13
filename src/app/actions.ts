@@ -2,10 +2,11 @@
 
 import { z } from "zod";
 import { saveSubscriber } from "@/lib/newsletter-db";
+import { siteText } from "@/content/site-text";
 
 const emailSchema = z
   .string()
-  .email({ message: "Please enter a valid email address." });
+  .email({ message: siteText.signup.invalidEmailMessage });
 
 type FormState = {
   success: boolean;
@@ -32,13 +33,13 @@ export async function subscribeToNewsletter(
     return {
       success: true,
       message: inserted
-        ? "Thank you for subscribing! We'll keep you updated."
-        : "You're already subscribed. We'll keep you updated.",
+        ? siteText.signup.successNewMessage
+        : siteText.signup.successExistingMessage,
     };
   } catch {
     return {
       success: false,
-      message: "An unexpected error occurred. Please try again later.",
+      message: siteText.signup.genericErrorMessage,
     };
   }
 }
