@@ -5,7 +5,7 @@ import { SignUp } from "@/components/landing/signup";
 
 export default function Home() {
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="flex min-h-dvh flex-col bg-transparent">
       <Header />
       <main className="flex flex-1 flex-col">
         <Hero />

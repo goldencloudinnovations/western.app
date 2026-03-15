@@ -3,6 +3,7 @@ import type {CSSProperties} from 'react';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ShaderBackground } from '@/components/shader-background';
 import { themeConfig } from '@/config/theme';
 import { siteText } from '@/content/site-text';
 
@@ -28,14 +29,17 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">
+      <body className="relative min-h-dvh isolate bg-background font-body antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <ShaderBackground />
+          <div className="relative z-10 flex min-h-dvh flex-col">
+            {children}
+          </div>
           <Toaster />
         </ThemeProvider>
       </body>
