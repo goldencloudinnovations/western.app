@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 
 type RenderTarget = {
@@ -42,6 +42,7 @@ uniform float uMouseDown;
 uniform int uFrame;
 uniform vec3 uThemeColor;
 uniform float uDarkMode;
+uniform float uMobile;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -84,6 +85,7 @@ void main() {
     uThemeColor.b * 0.12
   );
   vec3 accentColor = mix(lightThemeColor, darkThemeColor, uDarkMode);
+  float mobile = clamp(uMobile, 0.0, 1.0);
 
   vec2 mouse = uMouse;
   vec2 mousePrev = uMousePrev;
@@ -93,21 +95,24 @@ void main() {
   float distanceToPointer = length(p);
 
   vec2 mouseVelocity = (mouse - mousePrev) * aspect;
-  float motion = clamp(length(mouseVelocity) * 8.5, 0.0, 1.0);
+  float motion = clamp(length(mouseVelocity) * mix(8.5, 6.5, mobile), 0.0, 1.0);
   float activity = max(uMouseDown, motion);
-  float idleWeight = 0.1 + 0.65 * activity;
+  float idleWeight = mix(0.1, 0.07, mobile) + mix(0.65, 0.5, mobile) * activity;
 
   vec2 swirlDirection = vec2(-p.y, p.x);
   swirlDirection /= (distanceToPointer + 0.02);
 
-  float influence = exp(-38.0 * distanceToPointer * distanceToPointer);
-  float swirlStrength = mix(0.0014, 0.0072, uMouseDown) * influence * (0.32 + 0.68 * idleWeight);
-  vec2 flow = swirlDirection * swirlStrength + mouseVelocity * influence * 0.38;
+  float influence = exp(-mix(38.0, 52.0, mobile) * distanceToPointer * distanceToPointer);
+  float swirlStrength = mix(0.0014, 0.0072, uMouseDown) * influence * (0.32 + 0.68 * idleWeight) * mix(1.0, 0.78, mobile);
+  vec2 flow = swirlDirection * swirlStrength + mouseVelocity * influence * mix(0.38, 0.26, mobile);
 
-  float warp = fbm(uv * 2.1 + vec2(uTime * 0.009, -uTime * 0.007));
-  flow += 0.00055 * vec2(
-    sin(uTime * 0.09 + uv.y * 5.0 + warp * 6.2831),
-    cos(uTime * 0.08 + uv.x * 4.6 + warp * 6.2831)
+  float warp = fbm(
+    uv * mix(2.1, 1.85, mobile) +
+    vec2(uTime * mix(0.009, 0.006, mobile), -uTime * mix(0.007, 0.005, mobile))
+  );
+  flow += mix(0.00055, 0.00036, mobile) * vec2(
+    sin(uTime * mix(0.09, 0.06, mobile) + uv.y * mix(5.0, 4.2, mobile) + warp * 6.2831),
+    cos(uTime * mix(0.08, 0.055, mobile) + uv.x * mix(4.6, 3.9, mobile) + warp * 6.2831)
   );
 
   vec4 advected = texture(uPrev, uv - flow);
@@ -119,25 +124,28 @@ void main() {
     texture(uPrev, uv - vec2(0.0, px.y))
   ) * 0.25;
 
-  vec4 smoke = mix(advected, blur, 0.08);
+  vec4 smoke = mix(advected, blur, mix(0.08, 0.11, mobile));
 
-  smoke.rgb *= 0.975;
-  smoke.a *= mix(0.978, 0.982, uDarkMode);
+  smoke.rgb *= mix(0.975, 0.969, mobile);
+  smoke.a *= mix(mix(0.978, 0.982, uDarkMode), mix(0.964, 0.972, uDarkMode), mobile);
 
   float ambient = fbm(uv * 1.6 + vec2(uTime * 0.004, -uTime * 0.003));
-  smoke.rgb += accentColor * (ambient - 0.56) * mix(0.0018, 0.0011, uDarkMode);
+  smoke.rgb += accentColor * (ambient - 0.56) * mix(mix(0.0018, 0.0011, uDarkMode), mix(0.0014, 0.0009, uDarkMode), mobile);
 
-  float core = exp(-150.0 * distanceToPointer * distanceToPointer);
-  float halo = exp(-56.0 * distanceToPointer * distanceToPointer);
-  float plume = exp(-30.0 * distanceToPointer * distanceToPointer);
+  float core = exp(-mix(150.0, 190.0, mobile) * distanceToPointer * distanceToPointer);
+  float halo = exp(-mix(56.0, 72.0, mobile) * distanceToPointer * distanceToPointer);
+  float plume = exp(-mix(30.0, 42.0, mobile) * distanceToPointer * distanceToPointer);
 
   vec3 shadowSmoke = mix(vec3(0.012, 0.04, 0.045), vec3(0.012, 0.005, 0.006), uDarkMode) * plume * mix(0.7, 1.0, uDarkMode);
-  vec3 themedMist = accentColor * halo * mix(0.024, 0.018, uDarkMode) * (0.3 + 0.68 * idleWeight);
-  vec3 themedCore = accentColor * core * mix(0.028, 0.07, uDarkMode) * (0.45 + activity);
+  vec3 themedMist = accentColor * halo * mix(0.024, 0.018, uDarkMode) * (0.3 + 0.68 * idleWeight) * mix(1.0, 0.76, mobile);
+  vec3 themedCore = accentColor * core * mix(0.028, 0.07, uDarkMode) * (0.45 + activity) * mix(1.0, 0.7, mobile);
 
   smoke.rgb += shadowSmoke + themedMist + themedCore;
   smoke.a = clamp(
-    smoke.a + plume * mix(0.012, 0.011, uDarkMode) * (0.42 + 0.7 * idleWeight) + core * mix(0.055, 0.035, uDarkMode) * activity,
+    smoke.a + (
+      plume * mix(0.012, 0.011, uDarkMode) * (0.42 + 0.7 * idleWeight) +
+      core * mix(0.055, 0.035, uDarkMode) * activity
+    ) * mix(1.0, 0.72, mobile),
     0.0,
     1.0
   );
@@ -161,6 +169,7 @@ uniform vec2 uResolution;
 uniform float uTime;
 uniform vec3 uThemeColor;
 uniform float uDarkMode;
+uniform float uMobile;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -195,14 +204,15 @@ void main() {
     uThemeColor.b * 0.08
   );
   vec3 accentColor = mix(lightThemeColor, darkThemeColor, uDarkMode);
+  float mobile = clamp(uMobile, 0.0, 1.0);
   vec4 sampleColor = texture(uTexture, uv);
   vec3 accentSample = sampleColor.rgb * mix(vec3(0.42, 1.0, 1.14), vec3(1.0, 0.34, 0.12), uDarkMode);
 
   float grain = noise(uv * 220.0 + uTime * 0.02) - 0.5;
-  float density = clamp(sampleColor.a + grain * mix(0.018, 0.012, uDarkMode), 0.0, 1.0);
+  float density = clamp(sampleColor.a + grain * mix(mix(0.018, 0.012, uDarkMode), mix(0.013, 0.01, uDarkMode), mobile), 0.0, 1.0);
 
   float accentEnergy = clamp(
-    dot(accentSample, mix(vec3(0.18, 0.46, 0.36), vec3(0.62, 0.28, 0.1), uDarkMode)) * mix(4.8, 2.3, uDarkMode),
+    dot(accentSample, mix(vec3(0.18, 0.46, 0.36), vec3(0.62, 0.28, 0.1), uDarkMode)) * mix(mix(4.8, 2.3, uDarkMode), mix(4.2, 2.0, uDarkMode), mobile),
     0.0,
     1.0
   );
@@ -211,19 +221,19 @@ void main() {
   if (uDarkMode > 0.5) {
     vec3 smokeBase = vec3(0.5, 0.14, 0.12);
     vec3 accentSmoke = mix(smokeBase, mix(smokeBase * vec3(0.82, 0.72, 0.68), accentColor, 0.72), accentEnergy);
-    float opacity = density * 0.86;
+    float opacity = density * mix(0.86, 0.78, mobile);
     finalColor = mix(backgroundColor, accentSmoke, opacity);
-    finalColor += accentSample * 0.08;
+    finalColor += accentSample * mix(0.08, 0.06, mobile);
   } else {
     vec3 smokeBase = vec3(0.72, 0.9, 0.92);
     vec3 accentSmoke = mix(smokeBase, mix(vec3(0.34, 0.76, 0.8), accentColor, 0.68), accentEnergy);
-    float opacity = density * 0.44;
+    float opacity = density * mix(0.44, 0.4, mobile);
     finalColor = mix(backgroundColor, accentSmoke, opacity);
-    finalColor += accentSample * 0.05;
+    finalColor += accentSample * mix(0.05, 0.04, mobile);
     finalColor -= density * vec3(0.008, 0.005, 0.004);
   }
 
-  float vignette = 1.0 - 0.08 * dot(centered, centered);
+  float vignette = 1.0 - mix(0.0, 0.08, uDarkMode) * dot(centered, centered);
   finalColor *= vignette;
   finalColor = clamp(finalColor, 0.0, 1.0);
 
@@ -438,6 +448,7 @@ function getUniformLocation(gl: WebGL2RenderingContext, program: WebGLProgram, n
 
 export function ShaderBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [renderMode, setRenderMode] = useState<"pending" | "shader" | "flat">("pending");
   const themeRef = useRef<ThemeState>({
     accent: hslToRgb(4, 1, 0.61),
     isDark: 0,
@@ -471,8 +482,11 @@ export function ShaderBackground() {
     });
 
     if (!gl) {
+      setRenderMode("flat");
       return;
     }
+
+    setRenderMode("shader");
 
     try {
       themeRef.current = readThemeState(document.documentElement.classList.contains("dark"));
@@ -485,6 +499,7 @@ export function ShaderBackground() {
       const bufferUniforms = {
         darkMode: getUniformLocation(gl, bufferProgram, "uDarkMode"),
         frame: getUniformLocation(gl, bufferProgram, "uFrame"),
+        mobile: getUniformLocation(gl, bufferProgram, "uMobile"),
         mouse: getUniformLocation(gl, bufferProgram, "uMouse"),
         mouseDown: getUniformLocation(gl, bufferProgram, "uMouseDown"),
         mousePrev: getUniformLocation(gl, bufferProgram, "uMousePrev"),
@@ -496,6 +511,7 @@ export function ShaderBackground() {
 
       const displayUniforms = {
         darkMode: getUniformLocation(gl, displayProgram, "uDarkMode"),
+        mobile: getUniformLocation(gl, displayProgram, "uMobile"),
         resolution: getUniformLocation(gl, displayProgram, "uResolution"),
         texture: getUniformLocation(gl, displayProgram, "uTexture"),
         themeColor: getUniformLocation(gl, displayProgram, "uThemeColor"),
@@ -506,6 +522,7 @@ export function ShaderBackground() {
       let writeTarget: RenderTarget | null = null;
       let frame = 0;
       let animationFrameId = 0;
+      let mobileFactor = 0;
 
       const mouse = {
         down: 0,
@@ -515,17 +532,32 @@ export function ShaderBackground() {
         y: 0.42,
       };
 
-      const resize = () => {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const width = Math.max(1, Math.floor(window.innerWidth * dpr));
-        const height = Math.max(1, Math.floor(window.innerHeight * dpr));
+      const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+      const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-        if (canvas.width === width && canvas.height === height) {
+      const resize = () => {
+        const viewport = window.visualViewport;
+        const viewportWidth = Math.max(1, Math.round(viewport?.width ?? window.innerWidth));
+        const viewportHeight = Math.max(1, Math.round(viewport?.height ?? window.innerHeight));
+        const coarsePointer = coarsePointerQuery.matches;
+        const reduceMotion = reduceMotionQuery.matches;
+        const baseDpr = Math.min(window.devicePixelRatio || 1, coarsePointer ? 1.35 : 2);
+        const renderScale = coarsePointer ? (reduceMotion ? 0.72 : 0.8) : (reduceMotion ? 0.9 : 1);
+        const dpr = baseDpr * renderScale;
+
+        mobileFactor = coarsePointer ? 1 : 0;
+
+        const width = Math.max(1, Math.floor(viewportWidth * dpr));
+        const height = Math.max(1, Math.floor(viewportHeight * dpr));
+
+        if (canvas.width === width && canvas.height === height && canvas.style.width === `${viewportWidth}px` && canvas.style.height === `${viewportHeight}px`) {
           return;
         }
 
         canvas.width = width;
         canvas.height = height;
+        canvas.style.width = `${viewportWidth}px`;
+        canvas.style.height = `${viewportHeight}px`;
 
         destroyTarget(gl, readTarget);
         destroyTarget(gl, writeTarget);
@@ -602,6 +634,7 @@ export function ShaderBackground() {
         gl.uniform2f(bufferUniforms.mousePrev, mouse.prevX, mouse.prevY);
         gl.uniform1f(bufferUniforms.mouseDown, mouse.down);
         gl.uniform1i(bufferUniforms.frame, frame);
+        gl.uniform1f(bufferUniforms.mobile, mobileFactor);
         gl.uniform3f(bufferUniforms.themeColor, accent[0], accent[1], accent[2]);
         gl.uniform1f(bufferUniforms.darkMode, isDark);
 
@@ -620,6 +653,7 @@ export function ShaderBackground() {
         gl.uniform1i(displayUniforms.texture, 0);
         gl.uniform2f(displayUniforms.resolution, canvas.width, canvas.height);
         gl.uniform1f(displayUniforms.time, time);
+        gl.uniform1f(displayUniforms.mobile, mobileFactor);
         gl.uniform3f(displayUniforms.themeColor, accent[0], accent[1], accent[2]);
         gl.uniform1f(displayUniforms.darkMode, isDark);
 
@@ -634,21 +668,32 @@ export function ShaderBackground() {
       resize();
       animationFrameId = window.requestAnimationFrame(render);
 
+      const viewport = window.visualViewport;
       window.addEventListener("resize", resize);
+      window.addEventListener("orientationchange", resize);
       window.addEventListener("pointermove", handlePointerMove, { passive: true });
       window.addEventListener("pointerdown", handlePointerDown, { passive: true });
       window.addEventListener("pointerup", handlePointerUp, { passive: true });
       window.addEventListener("pointercancel", handlePointerUp, { passive: true });
       window.addEventListener("blur", handlePointerUp);
+      viewport?.addEventListener("resize", resize);
+      viewport?.addEventListener("scroll", resize);
+      coarsePointerQuery.addEventListener("change", resize);
+      reduceMotionQuery.addEventListener("change", resize);
 
       return () => {
         window.cancelAnimationFrame(animationFrameId);
         window.removeEventListener("resize", resize);
+        window.removeEventListener("orientationchange", resize);
         window.removeEventListener("pointermove", handlePointerMove);
         window.removeEventListener("pointerdown", handlePointerDown);
         window.removeEventListener("pointerup", handlePointerUp);
         window.removeEventListener("pointercancel", handlePointerUp);
         window.removeEventListener("blur", handlePointerUp);
+        viewport?.removeEventListener("resize", resize);
+        viewport?.removeEventListener("scroll", resize);
+        coarsePointerQuery.removeEventListener("change", resize);
+        reduceMotionQuery.removeEventListener("change", resize);
 
         destroyTarget(gl, readTarget);
         destroyTarget(gl, writeTarget);
@@ -665,9 +710,14 @@ export function ShaderBackground() {
       };
     } catch (error) {
       console.error("Unable to initialize shader background.", error);
+      setRenderMode("flat");
       return;
     }
   }, []);
+
+  if (renderMode === "flat") {
+    return <div aria-hidden="true" className="fixed inset-0 z-0 bg-background" />;
+  }
 
   return (
     <canvas
