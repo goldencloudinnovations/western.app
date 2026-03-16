@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - static-temp
   workflow_dispatch:
 
 permissions:
@@ -19,8 +20,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout static source branch
         uses: actions/checkout@v4
+        with:
+          ref: static-temp
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -33,6 +36,8 @@ jobs:
 
       - name: Build static site
         run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ""
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

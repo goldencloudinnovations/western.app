@@ -1,8 +1,10 @@
 import type {NextConfig} from 'next';
 
-const isGithubActions = process.env.GITHUB_ACTIONS === 'true';
-const repositoryName = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? '';
-const basePath = isGithubActions && repositoryName ? `/${repositoryName}` : '';
+const configuredBasePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? '').trim();
+const normalizedBasePath =
+  configuredBasePath && configuredBasePath !== '/'
+    ? `/${configuredBasePath.replace(/^\/+|\/+$/g, '')}`
+    : '';
 
 const nextConfig: NextConfig = {
   output: 'export',
@@ -13,10 +15,10 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  ...(basePath
+  ...(normalizedBasePath
     ? {
-        basePath,
-        assetPrefix: basePath,
+        basePath: normalizedBasePath,
+        assetPrefix: normalizedBasePath,
       }
     : {}),
   images: {
