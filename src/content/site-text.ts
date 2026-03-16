@@ -48,19 +48,6 @@ export const siteText = {
   theme: {
     toggleLabel: "Toggle theme",
   },
-  signup: {
-    title: "Be the First to Know",
-    description:
-      "Sign up for our newsletter to get the latest news and a notification when we launch.",
-    emailPlaceholder: "name@example.com",
-    emailAriaLabel: "Email",
-    submitLabel: "Subscribe",
-    submitPendingLabel: "Subscribing...",
-    invalidEmailMessage: "Please enter a valid email address.",
-    successNewMessage: "Thank you for subscribing! We'll keep you updated.",
-    successExistingMessage: "You're already subscribed. We'll keep you updated.",
-    genericErrorMessage: "An unexpected error occurred. Please try again later.",
-  },
   footer: {
     rightsReserved: "All rights reserved.",
     termsLabel: "Terms of Service",
@@ -102,19 +89,19 @@ export const siteText = {
         "This is a placeholder privacy policy for development/demo use only and is not legal advice.",
       sections: [
         {
-          heading: "Data We Collect",
+          heading: "Data Collection",
           body:
-            "For the newsletter form, we collect your email address when you submit it.",
+            "This static site does not directly collect personal data from visitors.",
         },
         {
-          heading: "How We Use Data",
+          heading: "Third-Party Services",
           body:
-            "We use collected emails to send product/newsletter updates related to this project.",
+            "Third-party providers such as hosting or analytics tools may process technical request data.",
         },
         {
           heading: "Data Storage",
           body:
-            "During local development, newsletter emails may be stored in a local SQLite database file.",
+            "No application-specific user database is used in this deployment.",
         },
         {
           heading: "Your Choices",
