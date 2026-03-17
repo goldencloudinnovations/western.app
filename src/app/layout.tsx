@@ -1,10 +1,8 @@
 import type {Metadata} from 'next';
-import type {CSSProperties} from 'react';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ShaderBackground } from '@/components/shader-background';
-import { themeConfig } from '@/config/theme';
 import { siteText } from '@/content/site-text';
 
 export const metadata: Metadata = {
@@ -12,18 +10,13 @@ export const metadata: Metadata = {
   description: siteText.metadata.description,
 };
 
-const rootThemeVars = {
-  '--main-color-light': themeConfig.light.mainColorHsl,
-  '--main-color-dark': themeConfig.dark.mainColorHsl,
-} as CSSProperties;
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="!scroll-smooth" suppressHydrationWarning style={rootThemeVars}>
+    <html lang="en" className="!scroll-smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

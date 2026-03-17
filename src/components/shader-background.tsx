@@ -78,13 +78,7 @@ float fbm(vec2 p) {
 void main() {
   vec2 uv = vUv;
   vec2 px = 1.0 / uResolution;
-  vec3 lightThemeColor = clamp(uThemeColor * vec3(0.9, 1.08, 1.18), 0.0, 1.0);
-  vec3 darkThemeColor = vec3(
-    max(uThemeColor.r, 0.45),
-    uThemeColor.g * 0.33,
-    uThemeColor.b * 0.12
-  );
-  vec3 accentColor = mix(lightThemeColor, darkThemeColor, uDarkMode);
+  vec3 accentColor = clamp(uThemeColor, 0.0, 1.0);
   float mobile = clamp(uMobile, 0.0, 1.0);
 
   vec2 mouse = uMouse;
@@ -136,7 +130,7 @@ void main() {
   float halo = exp(-mix(56.0, 72.0, mobile) * distanceToPointer * distanceToPointer);
   float plume = exp(-mix(30.0, 42.0, mobile) * distanceToPointer * distanceToPointer);
 
-  vec3 shadowSmoke = mix(vec3(0.012, 0.04, 0.045), vec3(0.012, 0.005, 0.006), uDarkMode) * plume * mix(0.7, 1.0, uDarkMode);
+  vec3 shadowSmoke = vec3(mix(0.04, 0.012, uDarkMode)) * plume * mix(0.7, 1.0, uDarkMode);
   vec3 themedMist = accentColor * halo * mix(0.024, 0.018, uDarkMode) * (0.3 + 0.68 * idleWeight) * mix(1.0, 0.76, mobile);
   vec3 themedCore = accentColor * core * mix(0.028, 0.07, uDarkMode) * (0.45 + activity) * mix(1.0, 0.7, mobile);
 
@@ -197,40 +191,33 @@ void main() {
   centered.x *= uResolution.x / uResolution.y;
 
   vec3 backgroundColor = mix(vec3(1.0), vec3(0.0), uDarkMode);
-  vec3 lightThemeColor = clamp(uThemeColor * vec3(0.9, 1.08, 1.18), 0.0, 1.0);
-  vec3 darkThemeColor = vec3(
-    max(uThemeColor.r, 0.45),
-    uThemeColor.g * 0.28,
-    uThemeColor.b * 0.08
-  );
-  vec3 accentColor = mix(lightThemeColor, darkThemeColor, uDarkMode);
+  vec3 accentColor = clamp(uThemeColor, 0.0, 1.0);
   float mobile = clamp(uMobile, 0.0, 1.0);
   vec4 sampleColor = texture(uTexture, uv);
-  vec3 accentSample = sampleColor.rgb * mix(vec3(0.42, 1.0, 1.14), vec3(1.0, 0.34, 0.12), uDarkMode);
 
   float grain = noise(uv * 220.0 + uTime * 0.02) - 0.5;
   float density = clamp(sampleColor.a + grain * mix(mix(0.018, 0.012, uDarkMode), mix(0.013, 0.01, uDarkMode), mobile), 0.0, 1.0);
 
   float accentEnergy = clamp(
-    dot(accentSample, mix(vec3(0.18, 0.46, 0.36), vec3(0.62, 0.28, 0.1), uDarkMode)) * mix(mix(4.8, 2.3, uDarkMode), mix(4.2, 2.0, uDarkMode), mobile),
+    dot(sampleColor.rgb, vec3(0.299, 0.587, 0.114)) * mix(mix(4.8, 2.3, uDarkMode), mix(4.2, 2.0, uDarkMode), mobile),
     0.0,
     1.0
   );
   vec3 finalColor;
 
   if (uDarkMode > 0.5) {
-    vec3 smokeBase = vec3(0.5, 0.14, 0.12);
-    vec3 accentSmoke = mix(smokeBase, mix(smokeBase * vec3(0.82, 0.72, 0.68), accentColor, 0.72), accentEnergy);
+    vec3 smokeBase = vec3(0.08);
+    vec3 accentSmoke = mix(smokeBase, accentColor, 0.35 + 0.45 * accentEnergy);
     float opacity = density * mix(0.86, 0.78, mobile);
     finalColor = mix(backgroundColor, accentSmoke, opacity);
-    finalColor += accentSample * mix(0.08, 0.06, mobile);
+    finalColor += accentColor * sampleColor.a * mix(0.12, 0.09, mobile);
   } else {
-    vec3 smokeBase = vec3(0.72, 0.9, 0.92);
-    vec3 accentSmoke = mix(smokeBase, mix(vec3(0.34, 0.76, 0.8), accentColor, 0.68), accentEnergy);
+    vec3 smokeBase = vec3(0.82);
+    vec3 accentSmoke = mix(smokeBase, accentColor, 0.22 + 0.36 * accentEnergy);
     float opacity = density * mix(0.44, 0.4, mobile);
     finalColor = mix(backgroundColor, accentSmoke, opacity);
-    finalColor += accentSample * mix(0.05, 0.04, mobile);
-    finalColor -= density * vec3(0.008, 0.005, 0.004);
+    finalColor += accentColor * sampleColor.a * mix(0.06, 0.05, mobile);
+    finalColor -= density * vec3(0.006);
   }
 
   float vignette = 1.0 - mix(0.0, 0.08, uDarkMode) * dot(centered, centered);
@@ -282,7 +269,7 @@ function parseAccentColor(value: string): [number, number, number] {
   const matches = value.trim().match(/^([-\d.]+)\s+([-\d.]+)%\s+([-\d.]+)%$/);
 
   if (!matches) {
-    return hslToRgb(4, 1, 0.61);
+    return [1, 1, 1];
   }
 
   const hue = Number(matches[1]);
@@ -450,7 +437,7 @@ export function ShaderBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [renderMode, setRenderMode] = useState<"pending" | "shader" | "flat">("pending");
   const themeRef = useRef<ThemeState>({
-    accent: hslToRgb(4, 1, 0.61),
+    accent: [1, 1, 1],
     isDark: 0,
   });
   const resetRef = useRef(false);
