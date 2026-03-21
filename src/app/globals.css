@@ -7,6 +7,8 @@
     /* --main-color-light: 174 72% 56%;*/
     --main-color-light: 46 100% 62%;
     --main-color-dark: 46 100% 62%;
+    --selection-foreground: 0 0% 7%;
+    --tap-highlight: hsl(var(--main-color-light) / 0.24);
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -45,6 +47,7 @@
     --background: 0 0% 0%;
     --foreground: 0 0% 98%;
     --selection-foreground: 0 0% 98%;
+    --tap-highlight: hsl(var(--main-color-dark) / 0.28);
     --card: 0 0% 0%;
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 0%;
@@ -82,25 +85,22 @@
   * {
     @apply border-border;
   }
+
+  html {
+    -webkit-tap-highlight-color: var(--tap-highlight);
+  }
+
   body {
     @apply bg-background text-foreground;
   }
 
   ::selection {
     background-color: hsl(var(--primary) / 0.35);
-    color: inherit;
+    color: hsl(var(--selection-foreground));
   }
 
   ::-moz-selection {
     background-color: hsl(var(--primary) / 0.35);
-    color: inherit;
-  }
-
-  .dark ::selection {
-    color: hsl(var(--selection-foreground));
-  }
-
-  .dark ::-moz-selection {
     color: hsl(var(--selection-foreground));
   }
 }

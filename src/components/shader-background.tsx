@@ -92,6 +92,7 @@ void main() {
   float motion = clamp(length(mouseVelocity) * mix(8.5, 6.5, mobile), 0.0, 1.0);
   float activity = max(uMouseDown, motion);
   float idleWeight = mix(0.1, 0.07, mobile) + mix(0.65, 0.5, mobile) * activity;
+  float mobileActive = mix(1.0, smoothstep(0.015, 0.18, activity), mobile);
 
   vec2 swirlDirection = vec2(-p.y, p.x);
   swirlDirection /= (distanceToPointer + 0.02);
@@ -120,26 +121,27 @@ void main() {
 
   vec4 smoke = mix(advected, blur, mix(0.08, 0.11, mobile));
 
-  smoke.rgb *= mix(0.975, 0.969, mobile);
-  smoke.a *= mix(mix(0.978, 0.982, uDarkMode), mix(0.964, 0.972, uDarkMode), mobile);
+  smoke.rgb *= mix(0.975, 0.986, mobile);
+  smoke.a *= mix(mix(0.978, 0.982, uDarkMode), mix(0.982, 0.986, uDarkMode), mobile);
 
   float ambient = fbm(uv * 1.6 + vec2(uTime * 0.004, -uTime * 0.003));
-  smoke.rgb += accentColor * (ambient - 0.56) * mix(mix(0.0018, 0.0011, uDarkMode), mix(0.0014, 0.0009, uDarkMode), mobile);
+  float ambientStrength = mix(mix(0.0038, 0.0015, uDarkMode), 0.0, mobile);
+  smoke.rgb += accentColor * (ambient - 0.54) * ambientStrength;
 
   float core = exp(-mix(150.0, 190.0, mobile) * distanceToPointer * distanceToPointer);
   float halo = exp(-mix(56.0, 72.0, mobile) * distanceToPointer * distanceToPointer);
   float plume = exp(-mix(30.0, 42.0, mobile) * distanceToPointer * distanceToPointer);
 
   vec3 shadowSmoke = vec3(mix(0.04, 0.012, uDarkMode)) * plume * mix(0.7, 1.0, uDarkMode);
-  vec3 themedMist = accentColor * halo * mix(0.024, 0.018, uDarkMode) * (0.3 + 0.68 * idleWeight) * mix(1.0, 0.76, mobile);
-  vec3 themedCore = accentColor * core * mix(0.028, 0.07, uDarkMode) * (0.45 + activity) * mix(1.0, 0.7, mobile);
+  vec3 themedMist = accentColor * halo * mix(0.04, 0.018, uDarkMode) * (0.34 + 0.7 * idleWeight) * mix(1.0, 0.76, mobile);
+  vec3 themedCore = accentColor * core * mix(0.054, 0.07, uDarkMode) * (0.5 + activity) * mix(1.0, 0.7, mobile);
 
-  smoke.rgb += shadowSmoke + themedMist + themedCore;
+  smoke.rgb += (shadowSmoke + themedMist + themedCore) * mobileActive;
   smoke.a = clamp(
     smoke.a + (
       plume * mix(0.012, 0.011, uDarkMode) * (0.42 + 0.7 * idleWeight) +
       core * mix(0.055, 0.035, uDarkMode) * activity
-    ) * mix(1.0, 0.72, mobile),
+    ) * mix(1.0, 0.72, mobile) * mobileActive,
     0.0,
     1.0
   );
@@ -196,28 +198,30 @@ void main() {
   vec4 sampleColor = texture(uTexture, uv);
 
   float grain = noise(uv * 220.0 + uTime * 0.02) - 0.5;
-  float density = clamp(sampleColor.a + grain * mix(mix(0.018, 0.012, uDarkMode), mix(0.013, 0.01, uDarkMode), mobile), 0.0, 1.0);
+  float grainStrength = mix(mix(0.018, 0.012, uDarkMode), 0.0, mobile);
+  float density = clamp(sampleColor.a + grain * grainStrength, 0.0, 1.0);
 
   float accentEnergy = clamp(
-    dot(sampleColor.rgb, vec3(0.299, 0.587, 0.114)) * mix(mix(4.8, 2.3, uDarkMode), mix(4.2, 2.0, uDarkMode), mobile),
+    dot(sampleColor.rgb, vec3(0.299, 0.587, 0.114)) * mix(mix(7.2, 2.3, uDarkMode), mix(5.2, 2.0, uDarkMode), mobile),
     0.0,
     1.0
   );
   vec3 finalColor;
+  float mobileFadeToBase = mix(1.0, smoothstep(0.02, 0.22, density), mobile);
 
   if (uDarkMode > 0.5) {
     vec3 smokeBase = vec3(0.08);
     vec3 accentSmoke = mix(smokeBase, accentColor, 0.35 + 0.45 * accentEnergy);
-    float opacity = density * mix(0.86, 0.78, mobile);
+    float opacity = density * mix(0.86, 0.74, mobile) * mobileFadeToBase;
     finalColor = mix(backgroundColor, accentSmoke, opacity);
-    finalColor += accentColor * sampleColor.a * mix(0.12, 0.09, mobile);
+    finalColor += accentColor * sampleColor.a * mix(0.12, 0.08, mobile) * mobileFadeToBase;
   } else {
-    vec3 smokeBase = vec3(0.82);
-    vec3 accentSmoke = mix(smokeBase, accentColor, 0.22 + 0.36 * accentEnergy);
-    float opacity = density * mix(0.44, 0.4, mobile);
+    vec3 smokeBase = vec3(0.86);
+    vec3 accentSmoke = mix(smokeBase, accentColor, 0.36 + 0.5 * accentEnergy);
+    float opacity = density * mix(0.6, 0.44, mobile);
     finalColor = mix(backgroundColor, accentSmoke, opacity);
-    finalColor += accentColor * sampleColor.a * mix(0.06, 0.05, mobile);
-    finalColor -= density * vec3(0.006);
+    finalColor += accentColor * sampleColor.a * mix(0.14, 0.08, mobile);
+    finalColor -= density * vec3(0.002);
   }
 
   float vignette = 1.0 - mix(0.0, 0.08, uDarkMode) * dot(centered, centered);
