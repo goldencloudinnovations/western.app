@@ -5,7 +5,7 @@ const privacyText = siteText.legal.privacy;
 
 export const metadata: Metadata = {
   title: `${privacyText.title} | ${siteText.brand.legalName}`,
-  description: privacyText.intro,
+  // description: privacyText.intro,
 };
 
 export default function PrivacyPage() {
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             {siteText.legal.lastUpdatedLabel}: {siteText.legal.lastUpdated}
           </p>
-          <p className="mt-6 text-muted-foreground">{privacyText.intro}</p>
+          {/* <p className="mt-6 text-muted-foreground">{privacyText.intro}</p> */}
         </div>
       </section>
       <section className="bg-background/20 py-10 backdrop-blur-[2px] md:py-12">

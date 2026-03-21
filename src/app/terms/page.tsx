@@ -5,7 +5,7 @@ const termsText = siteText.legal.terms;
 
 export const metadata: Metadata = {
   title: `${termsText.title} | ${siteText.brand.legalName}`,
-  description: termsText.intro,
+  // description: termsText.intro,
 };
 
 export default function TermsPage() {
@@ -17,7 +17,7 @@ export default function TermsPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             {siteText.legal.lastUpdatedLabel}: {siteText.legal.lastUpdated}
           </p>
-          <p className="mt-6 text-muted-foreground">{termsText.intro}</p>
+          {/* <p className="mt-6 text-muted-foreground">{termsText.intro}</p> */}
         </div>
       </section>
       <section className="bg-background/20 py-10 backdrop-blur-[2px] md:py-12">
