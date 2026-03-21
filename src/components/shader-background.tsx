@@ -85,11 +85,18 @@ void main() {
   vec2 mousePrev = uMousePrev;
   vec2 aspect = vec2(uResolution.x / uResolution.y, 1.0);
 
-  vec2 p = (uv - mouse) * aspect;
-  float distanceToPointer = length(p);
-
   vec2 mouseVelocity = (mouse - mousePrev) * aspect;
   float motion = clamp(length(mouseVelocity) * mix(8.5, 6.5, mobile), 0.0, 1.0);
+  float stillness = 1.0 - smoothstep(0.012, 0.095, motion);
+  vec2 idleDrift = vec2(
+    sin(uTime * mix(0.88, 0.6, mobile) + mouse.y * 8.7),
+    cos(uTime * mix(0.76, 0.52, mobile) + mouse.x * 9.4)
+  ) * mix(0.0042, 0.0011, mobile) * stillness;
+  vec2 animatedMouse = clamp(mouse + idleDrift, 0.0, 1.0);
+
+  vec2 p = (uv - animatedMouse) * aspect;
+  float distanceToPointer = length(p);
+
   float activity = max(uMouseDown, motion);
   float idleWeight = mix(0.1, 0.07, mobile) + mix(0.65, 0.5, mobile) * activity;
   float mobileActive = mix(1.0, smoothstep(0.015, 0.18, activity), mobile);
@@ -216,12 +223,12 @@ void main() {
     finalColor = mix(backgroundColor, accentSmoke, opacity);
     finalColor += accentColor * sampleColor.a * mix(0.12, 0.08, mobile) * mobileFadeToBase;
   } else {
-    vec3 smokeBase = vec3(0.86);
-    vec3 accentSmoke = mix(smokeBase, accentColor, 0.36 + 0.5 * accentEnergy);
-    float opacity = density * mix(0.6, 0.44, mobile);
+    vec3 smokeBase = vec3(0.9);
+    vec3 accentSmoke = mix(smokeBase, accentColor, 0.44 + 0.52 * accentEnergy);
+    float opacity = density * mix(0.72, 0.54, mobile);
     finalColor = mix(backgroundColor, accentSmoke, opacity);
-    finalColor += accentColor * sampleColor.a * mix(0.14, 0.08, mobile);
-    finalColor -= density * vec3(0.002);
+    finalColor += accentColor * sampleColor.a * mix(0.21, 0.12, mobile);
+    finalColor -= density * vec3(0.0008);
   }
 
   float vignette = 1.0 - mix(0.0, 0.08, uDarkMode) * dot(centered, centered);
