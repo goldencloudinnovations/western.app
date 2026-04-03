@@ -16,7 +16,7 @@ export const siteText = {
   hero: {
     title: "The Future of the Frontier has arrived.",
     description:
-      "Experience the next generation of equine ASMR.",
+      "Experience the sounds of the West.",
   },
   teaser: {
     title: "Something New is on the Horizon",
